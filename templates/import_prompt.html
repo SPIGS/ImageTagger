@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <div id="nav-top">
+        <button onclick="pywebview.api.goto_index();" title="Return to Index"><b>Back</b></button>
+    
+        <div id="info">
+            &nbsp;
+        </div>
+    </div>
+    <div id="deck">
+        
+        <div class="card" onclick="pywebview.api.choose_path(true);">
+            Choose Folder <br>
+            <img src="static/res/folder.svg" alt="" style="width:50%;">
+            <!--By Copyright (C) 2014 Uri Herrera and others, KDE Visual Design Group; - KDE github;, LGPL, https://commons.wikimedia.org/w/index.php?curid=49041173 -->
+        </div>
+        
+        <div class="card" onclick="pywebview.api.choose_path(false);">
+            Choose File <br>
+            <img src="static/res/photo.svg" alt="" style="width:50%;">
+            <!-- By © 2014 Andreas Kainz & Uri Herrera & Andrew Lake & Marco Martin & Harald Sitter & Jonathan Riddell & Ken Vermette & Aleix Pol & David Faure & Albert Vaca & Luca Beltrame & Gleb Popov & Nuno Pinheiro & Alex Richardson & Jan Grulich & Bernhard Landauer & Heiko Becker & Volker Krause & David Rosca & Phil Schaf / KDE, LGPL, https://commons.wikimedia.org/w/index.php?curid=49040296 -->
+        </div>
+    </div>
+    <div id="import-submit-form" style="width: 100%; text-align: center; margin-top: 5%;">
+        <h2>
+            {% if file_path %}
+                Selected: {{ file_path }}
+            {% else %}
+                Choose file path above.
+            {% endif %}
+        </h2>
+        <button type="submit" title="Import" onclick="pywebview.api.goto_import();"><b>Import</b></button>
+    </div>
+    <script>
+        function showLibInfo(response) {
+            var numFiles = response.numFiles;
+            var size = response.size;
+            document.getElementById("info").innerText = numFiles + " Files " + size;
+        }
+
+        window.addEventListener('pywebviewready', function () {
+            pywebview.api.get_lib_info().then(showLibInfo);
+        });
+
+        function importPath () {
+            pywebview.api.goto_import();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="static/css/style.css">
+    <style>
+        .nav-left {
+            width: 180px;
+            float: left;
+            text-align: left;
+            margin-top: 20px;
+            padding-left: 10px;
+        }
+        div.media-content {
+            margin-left: 205px;
+            margin-right: 10px;
+            vertical-align: top;
+            text-align: left;
+            height: auto;
+
+        }
+
+        .tag-item:hover > .delete-tag {
+            display:inline;
+            color: red;
+        }
+
+        .delete-tag {
+            text-decoration: none;
+            display: none;
+        }
+
+        #img-container {
+            padding-top: 14px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="nav-top">
+        <div id="search-form">
+            <input type="search" name="search" id="search" value="{{last_search}}">
+            <button type="submit" title="Submit Search" onclick="search(1);"><b>Search</b></button>
+        </div>
+
+        <button onclick="pywebview.api.goto_index('', 1, true);" title="Return to Index"><b>Back</b></button>
+    
+        <button onclick="pywebview.api.goto_import_prompt();" title="Import Files"><b>Import</b></button>
+    
+        <button type="submit" title="Settings"><b>Settings</b></button>
+    
+        <button type="submit" title="About"><b>About</b></button>
+    
+        <div id="info">
+            &nbsp;
+        </div>
+    </div>
+    <div class="nav-left">
+        <div id="tags-left">
+            <h3>Tags</h3>
+            {% if tags|length > 0 %}
+            {% for tag in tags %}
+            <p class="tag-item"><a onclick="pywebview.api.goto_index('{{tag}}',1, false);">{{tag}}</a> <a onclick="removeTag(this);" class="delete-tag">&#10060;</a></p>
+            {% endfor %}
+            {% else %}
+            <p id="no-tag-marker">No tags</p>
+            {% endif %}
+        </div>
+        <div id="tag-form">
+            <input type="text" name="tag" id="tag">
+            <button id="tag-submit" type="submit" onclick="addTag();"><b>Add Tag</b></button>
+        </div>
+    
+        <div id="statistics-left">
+            <h3>Statistics</h3>
+            <p id="img-extension">Extension: </p>
+            <p id="img-dimensions">Size: </p>
+            <p id="img-filesize">Filesize: </p>
+        </div>
+    
+        <div id="options-left">
+            <h3>Options</h3>
+            <a href="#" onclick="fitImage();">Resize Image</a>
+            <br>
+            <a href="#" onclick="fullsizeImage();">Full size</a>
+            <br>
+            <a href="#">Delete</a>
+        </div>
+    </div>
+    <div class="media-content">
+        <div id="img-container">
+            <img id="file" img-id="{{image_id}}" data-full-width="0" width="{{default_width}}" src="{{image}}" alt="./static/res/bongo.gif">
+        </div>
+    </div>
+    <script>
+
+        function showLibInfo (response) {
+            var numFiles = response.numFiles;
+            var size = response.size;
+            document.getElementById("info").innerText = numFiles + " Files " + size;
+        }
+
+        function getImageInfo (response) {
+            var img = document.getElementById("file");
+            var ext = document.getElementById("img-extension");
+            var dims = document.getElementById("img-dimensions");
+            var size = document.getElementById("img-filesize");
+
+            ext.innerText = ext.innerText + response.extension;
+            dims.innerText = dims.innerText + response.width + "x" + response.height;
+            size.innerText = size.innerText + response.size;
+            img.setAttribute("data-full-width", response.width);
+        }
+
+        function updateTags (response) {
+            if (response.success) {
+                var tag = response.tag;
+                var tag_list = document.getElementById("tags-left");
+                var tag_link = document.createElement("a");
+                var tag_delete = document.createElement("a");
+                tag_delete.className = "delete-tag";
+                tag_delete.innerText = "\u274C";
+                tag_link.onclick = "pywebview.api.goto_index('"+ tag + "',1, false);"
+                var space_node = document.createElement("p");
+                space_node.className = "tag-item"
+                var tag_text = document.createTextNode(tag);
+                tag_link.appendChild(tag_text);
+                space_node.appendChild(tag_link);
+                space_node.appendChild(tag_delete);
+                var marker = document.getElementById("no-tag-marker");
+               
+                if (marker != null) {
+                    marker.parentNode.removeChild(marker);
+                    tag_list.appendChild(space_node);
+                } else {
+                    tag_list.appendChild(space_node);
+                }
+            }
+        }
+
+        function addTag (){
+            var tag = document.getElementById("tag").value;
+            var img_id = document.getElementById("file").getAttribute("img-id");
+            var tag_list = document.getElementById("tags-left").childNodes;
+            
+            var has_tag = false;
+            for (let i = 0; i < tag_list.length; i++) {
+                if (tag_list[i].innerText == tag) {
+                    has_tag = true;
+                    break;
+                }
+            }
+            if (has_tag == false) {
+                pywebview.api.add_tag(img_id, tag).then(updateTags);
+            }
+        }
+
+        function removeTag (e) {
+            var listItem = e.parentNode;
+            var tag = listItem.firstChild.innerText;
+            var img_id = document.getElementById("file").getAttribute("img-id");
+            listItem.parentNode.removeChild(listItem);
+            pywebview.api.remove_tag(img_id, tag);
+        }
+
+        window.addEventListener('pywebviewready', function () {
+            var img_id = document.getElementById("file").getAttribute("img-id");
+            pywebview.api.get_lib_info().then(showLibInfo);
+            pywebview.api.get_image_info(img_id).then(getImageInfo);
+        });
+        
+        function fullsizeImage() {
+            img = document.getElementById("file");
+            var full_width = img.getAttribute("data-full-width") + "px";
+            img.style.width = full_width;
+        }
+
+        function fitImage() {
+            
+            img = document.getElementById("file");
+            if (img.getAttribute("data-full-width") > 1000) {
+                img.style.width = "95%";
+            } else {
+                fullsizeImage();
+            }
+        }
+
+        function search(page) {
+            search_form = document.getElementById("search").value;
+            pywebview.api.goto_index(search_form, page);
+        }
+    </script>
+</body>
+</html>

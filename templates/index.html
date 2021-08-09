@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <div id="nav-top">
+        <div id="search-form">
+            <input type="search" name="search" id="search" value="{{last_search}}">
+            <button type="submit" title="Submit Search" onclick="search(1);"><b>Search</b></button>
+        </div>
+
+        {% if first_pg %}
+            <button type="submit" title="Previous Page" disabled><b>&#60 &#60</b></button>
+        {% else %}
+            <button type="submit" title="Previous Page" onclick="prevPage();"><b>&#60 &#60</b></button>
+        {% endif %}
+        
+        {% if last_pg %}
+            <button type="submit" title="Next Page" disabled><b>&#62 &#62</b></button>
+        {% else %}
+            <button type="submit" title="Next Page" onclick="nextPage();"><b>&#62 &#62</b></button>
+        {% endif %}
+
+        <button onclick="pywebview.api.goto_import_prompt();" title="Import Files"><b>Import</b></button>
+
+        <button type="submit" title="Settings" disabled><b>Settings</b></button>
+        
+        <button type="submit" title="About"disabled><b>About</b></button>
+        
+        <div id="info">
+            &nbsp;
+        </div>
+    </div>
+    <div class="media-content" page="{{current_pg}}">
+        {% if images|length > 0 %}
+            {% for image in images %}
+            <span class="thumb" title="File Information:&#10;Resolution: {{image[2]}}x{{image[3]}}&#10;Extension: {{image[4]}}&#10;Size: {{image[6]}}&#10;">
+                <a onclick="view(this);">
+                    <img id="{{image[5]}}" class="preview" data-full-width="{{image[2]}}" subfolder="{{image[0]}}" file="{{image[1]}}" src="./db/library/{{image[0]}}/{{image[1]}}" alt="./static/res/bongo.gif">
+                </a>
+            </span>
+            {% endfor %}
+        {% else %}
+            Nothing here.
+        {% endif %}
+    </div>
+    <script>
+
+        function showLibInfo(response) {
+            var numFiles = response.numFiles;
+            var size = response.size;
+            document.getElementById("info").innerText = numFiles + " Files " + size;
+        }
+
+        window.addEventListener('pywebviewready', function () {
+            pywebview.api.get_lib_info().then(showLibInfo);
+        });
+
+        function search (page) {
+            search_form  = document.getElementById("search").value;
+            pywebview.api.goto_index(search_form, page);
+        }
+
+        function nextPage () {
+            current_page = document.getElementsByClassName("media-content")[0].getAttribute("page")
+            search(parseInt(current_page) + 1)
+        }
+
+        function prevPage () {
+            current_page = document.getElementsByClassName("media-content")[0].getAttribute("page")
+            search(parseInt(current_page) - 1)
+        }
+
+        function view (e) {
+            var subfolder = e.children[0].getAttribute("subfolder").replace("t", "f");
+            var file = e.children[0].getAttribute("file");
+            var img_width = e.children[0].getAttribute("data-full-width")
+            var img_path = "./db/library/" + subfolder + "/" + file;
+            var img_id =  e.children[0].id;
+            pywebview.api.goto_view(img_id, img_path);
+        }
+    </script>
+</body>
+</html>
