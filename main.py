@@ -119,6 +119,6 @@ class Api:
 
 if __name__ == '__main__':
     api = Api()
-    window = webview.create_window('Test', html='init',js_api=api, min_size=(880, 600), easy_drag=False, frameless=False)
+    window = webview.create_window('Image Tagger', html='init',js_api=api, min_size=(880, 600), easy_drag=False, frameless=False)
     window.closed += on_closed
     webview.start(load_html, window, gui="mshtml")
