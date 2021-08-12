@@ -129,4 +129,5 @@ dmypy.json
 .pyre/
 
 # database and user library
-db/library
+db/library/
+.db
